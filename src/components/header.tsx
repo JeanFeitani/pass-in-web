@@ -10,9 +10,6 @@ export function Header() {
         <a href="" className="font-medium text-sm text-zinc-300">
           Eventos
         </a>
-        <a href="" className="font-medium text-sm">
-          Participantes
-        </a>
       </nav>
     </div>
   )
