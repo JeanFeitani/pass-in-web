@@ -24,10 +24,26 @@ interface Attendee {
 }
 
 export function AttendeeList() {
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(() => {
+    const url = new URL(window.location.toString())
+
+    if (url.searchParams.has('page')) {
+      return Number(url.searchParams.get('page'))
+    }
+
+    return 1
+  })
   const [attendees, setAttendees] = useState<Attendee[]>([])
   const [total, setTotal] = useState(0)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => {
+    const url = new URL(window.location.toString())
+
+    if (url.searchParams.has('search')) {
+      return url.searchParams.get('search') || ''
+    }
+
+    return ''
+  })
 
   const totalPages = Math.ceil(total / 10)
 
@@ -49,31 +65,42 @@ export function AttendeeList() {
       })
   }, [page, search])
 
-  /* const publishedDateFormatted = format(post.publishedAt, "d 'de' LLLL 'às' HH:mm'h'", {
-    locale: ptBR,
-  })
+  function setCurrentSearch(search: string) {
+    const url = new URL(window.location.toString())
 
-  const publishedDateRelativeToNow = formatDistanceToNow(post.publishedAt, {
-    locale: ptBR,
-    addSuffix: true
-  }) */
+    url.searchParams.set('search', String(search))
+
+    window.history.pushState({}, '', url)
+
+    setSearch(search)
+  }
+
+  function setCurrentPage(page: number) {
+    const url = new URL(window.location.toString())
+
+    url.searchParams.set('page', String(page))
+
+    window.history.pushState({}, '', url)
+
+    setPage(page)
+  }
 
   function onSearchInputChanged(event: ChangeEvent<HTMLInputElement>) {
-    setSearch(event.target.value)
-    setPage(1)
+    setCurrentSearch(event.target.value)
+    setCurrentPage(1)
   }
 
   function goToFirstPage() {
-    setPage(1)
+    setCurrentPage(1)
   }
   function goToLastPage() {
-    setPage(totalPages)
+    setCurrentPage(totalPages)
   }
   function goToPreviousPage() {
-    setPage((pState) => pState - 1)
+    setCurrentPage(page - 1)
   }
   function goToNextPage() {
-    setPage((pState) => pState + 1)
+    setCurrentPage(page + 1)
   }
   return (
     <div className="flex flex-col gap-4">
@@ -82,6 +109,7 @@ export function AttendeeList() {
         <div className="px-3 w-72 py-1.5 border border-white/10 rounded-lg flex items-center gap-3">
           <Search className="size-4 text-emerald-300" />
           <input
+            value={search}
             onChange={onSearchInputChanged}
             className="bg-transparent flex-1 outline-none border-0 p-0 text-sm focus:ring-0"
             placeholder="Buscar participante..."
