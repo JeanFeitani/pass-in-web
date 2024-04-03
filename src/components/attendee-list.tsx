@@ -11,9 +11,37 @@ import { Table } from './table'
 import { TableHeader } from './table/table-header'
 import { TableCell } from './table/table-cell'
 import { TableRow } from './table/table-row'
+import { attendees } from '../data/attendees'
+import { ptBR } from 'date-fns/locale/pt-BR'
+import { formatDistanceToNow } from 'date-fns'
+import { useState } from 'react'
 
 export function AttendeeList() {
+  const [page, setPage] = useState(1)
 
+  const totalPages = Math.ceil(attendees.length / 10)
+
+  /* const publishedDateFormatted = format(post.publishedAt, "d 'de' LLLL 'às' HH:mm'h'", {
+    locale: ptBR,
+  })
+
+  const publishedDateRelativeToNow = formatDistanceToNow(post.publishedAt, {
+    locale: ptBR,
+    addSuffix: true
+  }) */
+
+  function goToFirstPage() {
+    setPage(1)
+  }
+  function goToLastPage() {
+    setPage(totalPages)
+  }
+  function goToPreviousPage() {
+    setPage((pState) => pState - 1)
+  }
+  function goToNextPage() {
+    setPage((pState) => pState + 1)
+  }
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-3 items-center">
@@ -44,9 +72,9 @@ export function AttendeeList() {
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: 8 }).map((_, i) => {
+          {attendees.slice((page - 1) * 10, page * 10).map((attendee) => {
             return (
-              <TableRow key={i}>
+              <TableRow key={attendee.id}>
                 <TableCell>
                   <input
                     type="checkbox"
@@ -57,13 +85,23 @@ export function AttendeeList() {
                 <TableCell>
                   <div className="flex flex-col gap-1">
                     <span className="font-semibold text-white">
-                      Diego Schell Fernandes
+                      {attendee.name}
                     </span>
-                    <span>diego@rocketseat.com.br</span>
+                    <span>{attendee.email}</span>
                   </div>
                 </TableCell>
-                <TableCell>7 dias atrás</TableCell>
-                <TableCell>3 dias atrás</TableCell>
+                <TableCell>
+                  {formatDistanceToNow(attendee.createdAt, {
+                    locale: ptBR,
+                    addSuffix: true,
+                  })}
+                </TableCell>
+                <TableCell>
+                  {formatDistanceToNow(attendee.checkedInAt, {
+                    locale: ptBR,
+                    addSuffix: true,
+                  })}
+                </TableCell>
                 <TableCell>
                   <IconButton transparent>
                     <MoreHorizontal className="size-4" />
@@ -75,22 +113,32 @@ export function AttendeeList() {
         </tbody>
         <tfoot>
           <tr>
-            <TableCell colSpan={3}>Mostrando 10 de 228 itens</TableCell>
+            <TableCell colSpan={3}>
+              Mostrando {page * 10} de {attendees.length} itens
+            </TableCell>
             <TableCell className="text-right" colSpan={3}>
               <div className="inline-flex items-center gap-8">
-                <span>Página 1 de 23</span>
+                <span>
+                  Página {page} de {totalPages}
+                </span>
 
                 <div className="flex gap-1.5">
-                  <IconButton>
+                  <IconButton onClick={goToFirstPage} disabled={page === 1}>
                     <ChevronsLeft className="size-4" />
                   </IconButton>
-                  <IconButton>
+                  <IconButton onClick={goToPreviousPage} disabled={page === 1}>
                     <ChevronLeft className="size-4" />
                   </IconButton>
-                  <IconButton>
+                  <IconButton
+                    onClick={goToNextPage}
+                    disabled={page === totalPages}
+                  >
                     <ChevronRight className="size-4" />
                   </IconButton>
-                  <IconButton>
+                  <IconButton
+                    onClick={goToLastPage}
+                    disabled={page === totalPages}
+                  >
                     <ChevronsRight className="size-4" />
                   </IconButton>
                 </div>
