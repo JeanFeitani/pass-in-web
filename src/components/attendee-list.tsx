@@ -11,15 +11,43 @@ import { Table } from './table'
 import { TableHeader } from './table/table-header'
 import { TableCell } from './table/table-cell'
 import { TableRow } from './table/table-row'
-import { attendees } from '../data/attendees'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { formatDistanceToNow } from 'date-fns'
-import { useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
+
+interface Attendee {
+  id: string
+  name: string
+  email: string
+  createdAt: string
+  checkedInAt: string | null
+}
 
 export function AttendeeList() {
   const [page, setPage] = useState(1)
+  const [attendees, setAttendees] = useState<Attendee[]>([])
+  const [total, setTotal] = useState(0)
+  const [search, setSearch] = useState('')
 
-  const totalPages = Math.ceil(attendees.length / 10)
+  const totalPages = Math.ceil(total / 10)
+
+  useEffect(() => {
+    const url = new URL(
+      'http://localhost:3333/events/9e9bd979-9d10-4915-b339-3786b1634f33/attendees',
+    )
+
+    url.searchParams.set('pageIndex', String(page - 1))
+    if (search.length > 0) {
+      url.searchParams.set('query', search)
+    }
+
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        setAttendees(data.attendees)
+        setTotal(data.total)
+      })
+  }, [page, search])
 
   /* const publishedDateFormatted = format(post.publishedAt, "d 'de' LLLL 'às' HH:mm'h'", {
     locale: ptBR,
@@ -29,6 +57,11 @@ export function AttendeeList() {
     locale: ptBR,
     addSuffix: true
   }) */
+
+  function onSearchInputChanged(event: ChangeEvent<HTMLInputElement>) {
+    setSearch(event.target.value)
+    setPage(1)
+  }
 
   function goToFirstPage() {
     setPage(1)
@@ -49,7 +82,8 @@ export function AttendeeList() {
         <div className="px-3 w-72 py-1.5 border border-white/10 rounded-lg flex items-center gap-3">
           <Search className="size-4 text-emerald-300" />
           <input
-            className="bg-transparent flex-1 outline-none border-0 p-0 text-sm"
+            onChange={onSearchInputChanged}
+            className="bg-transparent flex-1 outline-none border-0 p-0 text-sm focus:ring-0"
             placeholder="Buscar participante..."
           />
         </div>
@@ -72,7 +106,7 @@ export function AttendeeList() {
           </tr>
         </thead>
         <tbody>
-          {attendees.slice((page - 1) * 10, page * 10).map((attendee) => {
+          {attendees.map((attendee) => {
             return (
               <TableRow key={attendee.id}>
                 <TableCell>
@@ -91,16 +125,22 @@ export function AttendeeList() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  {formatDistanceToNow(attendee.createdAt, {
+                  {formatDistanceToNow(new Date(attendee.createdAt), {
                     locale: ptBR,
                     addSuffix: true,
                   })}
                 </TableCell>
                 <TableCell>
-                  {formatDistanceToNow(attendee.checkedInAt, {
-                    locale: ptBR,
-                    addSuffix: true,
-                  })}
+                  {attendee.checkedInAt === null ? (
+                    <span className="text-zinc-400">
+                      Não realizou o check-in
+                    </span>
+                  ) : (
+                    formatDistanceToNow(new Date(attendee.checkedInAt), {
+                      locale: ptBR,
+                      addSuffix: true,
+                    })
+                  )}
                 </TableCell>
                 <TableCell>
                   <IconButton transparent>
@@ -114,7 +154,7 @@ export function AttendeeList() {
         <tfoot>
           <tr>
             <TableCell colSpan={3}>
-              Mostrando {page * 10} de {attendees.length} itens
+              Mostrando {attendees.length} de {total} itens
             </TableCell>
             <TableCell className="text-right" colSpan={3}>
               <div className="inline-flex items-center gap-8">
